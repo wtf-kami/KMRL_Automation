@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Tables</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #0077cc;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            margin: 12px 0;
+        }
+        ul li a {
+            display: block;
+            text-decoration: none;
+            color: #0077cc;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px 16px;
+            border-radius: 6px;
+            background: #f0f8ff;
+            transition: all 0.2s ease-in-out;
+        }
+        ul li a:hover {
+            background: #0077cc;
+            color: white;
+            transform: translateX(5px);
+        }
+        .actions {
+            margin-top: 30px;
+            text-align: center;
+        }
+        button {
+            background: #0077cc;
+            border: none;
+            color: white;
+            padding: 10px 18px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease-in-out;
+        }
+        button:hover {
+            background: #005fa3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Database Tables</h1>
+    </header>
+    <div class="container">
+        <ul>
+            {% for table in tables %}
+                <li><a href="{{ url_for('view_table', table_name=table) }}">{{ table }}</a></li>
+            {% endfor %}
+        </ul>
+        <div class="actions">
+            <a href="/"><button>⬅ Back to Dashboard</button></a>
+        </div>
+    </div>
+</body>
+</html>

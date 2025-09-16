@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Table: {{ table_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #0077cc;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 26px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow-x: auto; /* horizontal scroll if table is wide */
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        th {
+            background: #0077cc;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        tr:hover {
+            background: #eef6ff;
+        }
+        .actions {
+            margin-top: 25px;
+            text-align: center;
+        }
+        button {
+            background: #0077cc;
+            border: none;
+            color: white;
+            padding: 10px 18px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.2s ease-in-out;
+        }
+        button:hover {
+            background: #005fa3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Contents of Table: {{ table_name }}</h1>
+    </header>
+    <div class="container">
+        {% if rows %}
+            <table>
+                <tr>
+                    {% for col in rows[0].keys() %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+                {% for row in rows %}
+                    <tr>
+                        {% for value in row.values() %}
+                            <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>No data found in this table.</p>
+        {% endif %}
+        <div class="actions">
+            <a href="{{ url_for('list_tables') }}"><button>⬅ Back to Tables</button></a>
+            <a href="/"><button>🏠 Back to Dashboard</button></a>
+        </div>
+    </div>
+</body>
+</html>

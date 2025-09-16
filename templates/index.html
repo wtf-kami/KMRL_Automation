@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Trainset Data Entry — Full Schema (IDs & Dates)</title>
+<style>
+  :root{
+    --bg:#f6f9fc; --card:#ffffff; --muted:#6b7280; --accent:#0ea5e9; --danger:#ef4444;
+    font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#fff)}
+  .app{max-width:1200px;margin:18px auto;display:grid;grid-template-columns:340px 1fr;gap:18px;padding:16px}
+  header{grid-column:1/-1;display:flex;align-items:center;gap:12px}
+  .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#2563eb);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+  h1{margin:0;font-size:18px}
+  .subtitle{color:var(--muted);font-size:13px}
+  .left{background:var(--card);border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(12,18,33,0.06);display:flex;flex-direction:column;gap:12px;height:calc(100vh - 120px);overflow:auto}
+  .add-row{display:flex;gap:8px}
+  .add-row input[type="text"]{flex:1;padding:8px;border-radius:8px;border:1px solid #e6eef7}
+  .btn{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;font-weight:700}
+  .btn.ghost{background:#fff;color:var(--accent);border:1px solid #dbeffd}
+  .train-list{display:flex;flex-direction:column;gap:8px}
+  .train-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;border:1px solid #eef5fb;cursor:pointer;background:linear-gradient(180deg,#fff,#fbfdff)}
+  .train-item.active{border-color:#2563eb;box-shadow:0 6px 12px rgba(37,99,235,0.06)}
+  .small-muted{font-size:12px;color:var(--muted)}
+  .right{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(12,18,33,0.06);height:calc(100vh - 120px);overflow:auto}
+  .section{margin-bottom:14px;padding:10px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid #eef6fb}
+  .section h3{margin:0 0 8px 0;font-size:15px}
+  label{display:block;font-weight:700;font-size:13px;margin-bottom:6px}
+  input[type=range]{width:100%}
+  input[type=number],input[type=text],select,input[type=datetime-local],input[type=date],textarea{width:100%;padding:6px;border-radius:6px;border:1px solid #e6eef7}
+  .row{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+  .row .col{flex:1}
+  .muted{color:var(--muted);font-size:13px}
+  .danger{background:var(--danger);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{padding:6px;border-bottom:1px solid #f1f5f9;text-align:left;font-size:13px}
+  .small{font-size:12px;padding:6px 8px}
+  .inline-actions{display:flex;gap:8px}
+  .muted-small{font-size:12px;color:#6b7280}
+  @media (max-width:980px){.app{grid-template-columns:1fr;padding:12px}.left{height:auto;order:2}.right{order:1;height:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">DB</div>
+    <div>
+      <h1>Trainset Data Entry — Full Schema (IDs & Dates)</h1>
+      <div class="subtitle">Now includes cert_id, log_id, created_at/closed_at, cleaning_id, contract_id, stab_id and depot location.</div>
+    </div>
+    <div style="margin-left:auto">
+      <a href="/induction">
+        <button class = "btn ghost">Go To Induction List</button>
+      </a>
+    </div>
+    <div style="margin-left:auto">
+      <a href="/tables">
+        <button class = "btn ghost">Go To Tables List</button>
+      </a>
+    </div>
+  </header>
+
+  <!-- LEFT: train list & depot manager -->
+  <aside class="left">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:800">Trains</div><div class="small-muted">Local editor</div>
+    </div>
+
+    <div class="add-row">
+      <input id="newTrainNumber" type="text" placeholder="Train number (unique)" />
+      <button id="createTrainBtn" class="btn">Create</button>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button id="saveAllBtn" class="btn">Save All</button>
+      <button id="syncQueueBtn" class="btn ghost">Sync Queue</button>
+    </div>
+
+    <div style="margin-top:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700">Depots</div>
+        <div class="small-muted">Manage</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+        <input id="newDepotName" type="text" placeholder="Depot name (e.g., Kochi Depot)"/>
+        <input id="newDepotLocation" type="text" placeholder="Location (address/coords)"/>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button id="addDepotBtn" class="btn ghost">Add</button>
+      </div>
+      <table id="depots_table" style="margin-top:8px"><thead><tr><th>id</th><th>name</th><th>location</th><th></th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div style="margin-top:12px" class="train-list" id="trainList"></div>
+
+    <div style="margin-top:auto;font-size:12px;color:var(--muted);">
+      Tip: create depots first to assign depot_id to trains. Save sends payload shaped to your DB tables.
+    </div>
+  </aside>
+
+  <!-- RIGHT: detail & child lists -->
+  <main class="right">
+    <div id="detailPanel" class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div id="selectedTitle" style="font-weight:900;font-size:16px">No train selected</div>
+          <div class="muted">Select a train from the left to edit its DB records</div>
+        </div>
+        <div class="inline-actions">
+          <button id="saveTrainBtn" class="btn">Save Train</button>
+          <button id="deleteTrainBtn" class="danger">Delete</button>
+        </div>
+      </div>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eef6fb"/>
+
+      <!-- TRAIN (train table) -->
+      <div class="section">
+        <h3>Train (train)</h3>
+        <div class="grid-2">
+          <div>
+            <label>train_id (INT, optional)</label>
+            <input id="train_db_id" type="number" min="1" placeholder="e.g. 123"/>
+            <label>train_number (varchar(10))</label>
+            <input id="train_number" type="text" maxlength="10" placeholder="Train 001" />
+            <label>status (Available, Service, Standby, IBL, Reserve)</label>
+            <select id="train_status"><option>Available</option><option>Service</option><option>Standby</option><option>IBL</option><option>Reserve</option></select>
+            <label>depot_id (select)</label>
+            <select id="train_depot_id"><option value="">— none —</option></select>
+          </div>
+          <div>
+            <label>in_service (boolean)</label>
+            <select id="train_in_service"><option value="true">true</option><option value="false">false</option></select>
+            <label>last_updated (timestamp)</label>
+            <input id="train_last_updated" type="datetime-local" />
+            <div class="muted-small">If left blank backend can set NOW()</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FITNESS certificates -->
+      <div class="section">
+        <h3>Fitness certificates (fitness_certificate)</h3>
+        <div class="grid-2">
+          <div>
+            <label>cert_id (optional)</label>
+            <input id="fc_cert_id" type="number" placeholder="cert_id (optional)"/>
+            <label>department (RollingStock, Signalling, Telecom...)</label>
+            <input id="fc_department" type="text" placeholder="RollingStock" />
+            <label>status (Valid, Pending, Expired)</label>
+            <select id="fc_status"><option>Valid</option><option>Pending</option><option>Expired</option></select>
+          </div>
+          <div>
+            <label>valid_from (timestamp)</label>
+            <input id="fc_valid_from" type="datetime-local" />
+            <label>valid_to (timestamp)</label>
+            <input id="fc_valid_to" type="datetime-local" />
+            <label>last_checked</label>
+            <input id="fc_last_checked" type="datetime-local" />
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="addFcBtn" class="btn">Add Certificate</button>
+        </div>
+        <table id="fc_table"><thead><tr><th>cert_id</th><th>dept</th><th>status</th><th>valid_from</th><th>valid_to</th><th>last_checked</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <!-- JOB CARDS -->
+      <div class="section">
+        <h3>Job cards (job_card)</h3>
+        <div class="grid-2">
+          <div>
+            <label>severity (Critical, Major, Minor)</label>
+            <select id="jc_severity"><option>Critical</option><option>Major</option><option>Minor</option></select>
+            <label>description</label>
+            <textarea id="jc_description" rows="3" placeholder="Describe job..." required></textarea>
+          </div>
+          <div>
+            <label>status (Open, Closed)</label>
+            <select id="jc_status"><option>Open</option><option>Closed</option></select>
+            <label>estimated_hours (numeric)</label>
+            <input id="jc_est_hours" type="number" step="0.1" min="0"/>
+            <label>parts_pending</label>
+            <select id="jc_parts_pending"><option value="false">false</option><option value="true">true</option></select>
+            <label>created_at</label>
+            <input id="jc_created_at" type="datetime-local"/>
+            <label>closed_at</label>
+            <input id="jc_closed_at" type="datetime-local"/>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="addJcBtn" class="btn">Add Job Card</button>
+        </div>
+        <table id="jc_table"><thead><tr><th>severity</th><th>status</th><th>hours</th><th>parts_pending</th><th>created_at</th><th>closed_at</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <!-- BRANDING CONTRACTS -->
+      <div class="section">
+        <h3>Branding contracts (branding_contract)</h3>
+        <div class="grid-2">
+          <div>
+            <label>contract_id (optional)</label><input id="bc_contract_id" type="number" />
+            <label>advertiser_name</label><input id="bc_advertiser" type="text"/>
+            <label>priority_level (High, Medium, Low)</label><select id="bc_priority"><option>Low</option><option>Medium</option><option>High</option></select>
+          </div>
+          <div>
+            <label>exposure_required_hours (int)</label><input id="bc_required_hours" type="number" min="0"/>
+            <label>exposure_accumulated_hours (int)</label><input id="bc_accum_hours" type="number" min="0" value="0"/>
+            <label>window_type (Daily, Weekly)</label><select id="bc_window_type"><option>Daily</option><option>Weekly</option></select>
+            <label>start_date</label><input id="bc_start" type="datetime-local"/>
+            <label>end_date</label><input id="bc_end" type="datetime-local"/>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="addBcBtn" class="btn">Add Branding</button>
+        </div>
+        <table id="bc_table"><thead><tr><th>contract_id</th><th>advertiser</th><th>priority</th><th>req hrs</th><th>period</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <!-- MILEAGE LOGS -->
+      <div class="section">
+        <h3>Mileage logs (mileage_log)</h3>
+        <div class="grid-2">
+          <div>
+            <label>log_id (optional)</label><input id="ml_log_id" type="number" />
+            <label>log_date</label><input id="ml_date" type="datetime-local" />
+            <label>km_run (numeric)</label><input id="ml_km" type="number" step="0.01" />
+          </div>
+          <div>
+            <label>cumulative_km (numeric)</label><input id="ml_cum" type="number" step="0.01" />
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="addMlBtn" class="btn">Add Mileage</button>
+        </div>
+        <table id="ml_table"><thead><tr><th>log_id</th><th>date</th><th>km</th><th>cumulative</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <!-- CLEANING SCHEDULE -->
+      <div class="section">
+        <h3>Cleaning schedule (cleaning_schedule)</h3>
+        <div class="grid-2">
+          <div>
+            <label>cleaning_id (optional)</label><input id="cs_cleaning_id" type="number" />
+            <label>cleaning_type (Routine, Deep)</label><select id="cs_type"><option>Routine</option><option>Deep</option></select>
+            <label>required (true/false)</label><select id="cs_required"><option value="true">true</option><option value="false">false</option></select>
+            <label>duration_hours (numeric)</label><input id="cs_duration" type="number" step="0.01" min="0"/>
+          </div>
+          <div>
+            <label>bay_id (int)</label><input id="cs_bay_id" type="number" min="0"/>
+            <label>crew_assigned (int)</label><input id="cs_crew" type="number" min="0"/>
+            <label>deadline (timestamp)</label><input id="cs_deadline" type="datetime-local"/>
+            <label>status (Scheduled, Done, Missed)</label><select id="cs_status"><option>Scheduled</option><option>Done</option><option>Missed</option></select>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="addCsBtn" class="btn">Add Cleaning</button>
+        </div>
+        <table id="cs_table"><thead><tr><th>cleaning_id</th><th>type</th><th>required</th><th>bay</th><th>deadline</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <!-- STABLING POSITIONS -->
+      <div class="section">
+        <h3>Stabling positions (stabling_position)</h3>
+        <div class="grid-2">
+          <div>
+            <label>stab_id (optional)</label><input id="sp_stab_id" type="number" />
+            <label>bay_id (int)</label><input id="sp_bay_id" type="number" min="0"/>
+            <label>bay_position_index (int)</label><input id="sp_pos_index" type="number" min="0" />
+            <label>distance_to_exit_meters (numeric)</label><input id="sp_dist" type="number" step="0.01" />
+          </div>
+          <div>
+            <label>estimated_shunt_moves (int)</label><input id="sp_shunt" type="number" min="0" />
+            <label>blocked (true/false)</label><select id="sp_blocked"><option value="false">false</option><option value="true">true</option></select>
+            <label>conflicts_with_other_rakes (true/false)</label><select id="sp_conflicts"><option value="false">false</option><option value="true">true</option></select>
+            <label>max_allowed_moves (int)</label><input id="sp_max_moves" type="number" min="0" value="3"/>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="addSpBtn" class="btn">Add Stabling</button>
+        </div>
+        <table id="sp_table"><thead><tr><th>stab_id</th><th>bay</th><th>pos</th><th>dist</th><th>shunt</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+      <div style="margin-top:16px; text-align:center;">
+        <button id="runInductionBtn" class="btn" style="background:linear-gradient(135deg,#0ea5e9,#2563eb);font-size:15px;padding:12px 20px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.12);transition:all 0.2s ease;">
+          ⚡ Run Induction Calculation
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  document.getElementById("runInductionBtn").addEventListener("click", async () => {
+    try {
+      let res = await fetch("/api/induction/run", { method: "POST" });
+      let data = await res.json();
+      if (data.success) {
+        alert("✅ Induction calculation completed!");
+        // redirect to induction table page
+        window.location.href = "/induction";
+      } else {
+        alert("❌ Failed: " + data.error);
+      }
+    } catch (err) {
+      alert("⚠️ Error: " + err.message);
+    }
+  });
+</script>
+
+<script>
+/* Backend endpoint - change to your API */
+const BACKEND_SAVE_URL = '/api/trains/save'; // change to your endpoint
+
+/* Local app state */
+let trains = []; // array of train objects
+let depots = []; // array of { depot_id, name, location }
+let selectedId = null;
+let counter = 0;
+function uid(){ counter++; return 'train_' + String(counter).padStart(3,'0'); }
+function $(sel, root=document){ return root.querySelector(sel); }
+function $all(sel, root=document){ return Array.from((root||document).querySelectorAll(sel)); }
+async function loadDepots() {
+  try {
+    let res = await fetch("/api/depots");   // <-- your backend endpoint
+    let data = await res.json();
+    if (Array.isArray(data)) {
+      depots = data; // assume [{depot_id, name, location}, ...]
+      renderDepots();
+      refreshDepotSelects();
+    }
+  } catch (err) {
+    console.error("Failed to load depots:", err);
+  }
+}
+
+/* ---------------------
+  Create empty objects (include train_id)
+----------------------*/
+function createEmptyTrain(train_number){
+  return {
+    _id: uid(),        // client side id
+    train_id: null,    // optional DB primary key
+    train_number: train_number || '',
+    status: 'Available',
+    depot_id: null,
+    in_service: true,
+    last_updated: null,
+    fitness_certificates: [], // fitness_certificate rows
+    job_cards: [], // job_card rows
+    branding_contracts: [], // branding_contract rows
+    mileage_logs: [], // mileage_log rows
+    cleaning_schedules: [], // cleaning_schedule rows
+    stabling_positions: [], // stabling_position rows
+    savedAt: null
+  };
+}
+
+// Fetch depots from backend on page load
+async function loadDepots() {
+  try {
+    const res = await fetch("/api/depots");
+    if (!res.ok) throw new Error("Failed to load depots");
+    depots = await res.json();
+    renderDepots();       // populate the table
+    renderDepotOptions(); // populate the dropdown
+  } catch (err) {
+    console.error(err);
+    alert("Could not load depots from server");
+  }
+}
+
+// call it once on page load
+document.addEventListener("DOMContentLoaded", loadDepots);
+
+// Render depots table
+function renderDepots(){
+  const tbody = document.querySelector('#depots_table tbody');
+  tbody.innerHTML = '';
+  depots.forEach((d,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${d.depot_id || '—'}</td>
+      <td>${d.name}</td>
+      <td>${d.location || '—'}</td>
+      <td>
+        <button class="btn ghost" data-idx="${i}" data-type="depot-remove">Remove</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('button[data-type="depot-remove"]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      const i = Number(b.getAttribute('data-idx'));
+      const depot = depots[i];
+
+      // If depot exists in backend, optionally call DELETE API
+      if(depot.depot_id){
+        try {
+          await fetch(`/api/depots/${depot.depot_id}`, { method: 'DELETE' });
+        } catch(err){
+          console.error('Failed to remove depot from backend', err);
+        }
+      }
+
+      depots.splice(i,1); // remove locally
+      renderDepots();
+      renderDepotOptions();
+    });
+  });
+}
+
+// Render depot options in train form
+function renderDepotOptions(){
+  const sel = document.querySelector('#train_depot_id');
+  sel.innerHTML = '<option value="">— none —</option>';
+  depots.forEach(d=>{
+    const opt = document.createElement('option');
+    opt.value = d.depot_id || '';
+    opt.textContent = d.name + (d.depot_id ? ` (#${d.depot_id})` : '');
+    sel.appendChild(opt);
+  });
+}
+
+// Add new depot
+async function addDepot(name, location){
+  try {
+    const res = await fetch('/api/depots/add', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, location })
+    });
+    const newDepot = await res.json();
+    depots.push(newDepot);
+    renderDepots();
+    renderDepotOptions();
+  } catch(err){
+    console.error('Failed to add depot', err);
+  }
+}
+
+
+$('#addDepotBtn').addEventListener('click', ()=>{
+  const name = $('#newDepotName').value.trim();
+  const loc = $('#newDepotLocation').value.trim();
+  if(!name) { alert('Enter depot name'); return; }
+  addDepot(name, loc);
+  $('#newDepotName').value = '';
+  $('#newDepotLocation').value = '';
+});
+
+/* ---------------------
+  Train list rendering / select
+----------------------*/
+function renderTrainList(){
+  const list = $('#trainList');
+  list.innerHTML = '';
+  trains.forEach(t=>{
+    const idDisplay = t.train_id ? `#${t.train_id} ` : '';
+    const div = document.createElement('div');
+    div.className = 'train-item' + (t._id===selectedId ? ' active' : '');
+    div.innerHTML = `<div style="display:flex;flex-direction:column">
+                       <div style="font-weight:800">${idDisplay}${t.train_number || '(unnamed)'}</div>
+                       <div class="small-muted">${t.status || 'Available'}</div>
+                     </div>
+                     <div style="display:flex;gap:8px;align-items:center">
+                       <button class="btn ghost small" data-id="${t._id}" data-action="copy">Copy</button>
+                       <button class="btn small" data-id="${t._id}" data-action="open">Open</button>
+                     </div>`;
+    div.addEventListener('click',(ev)=>{
+      const tag = ev.target.tagName.toLowerCase();
+      if(tag === 'button' || ev.target.closest('button')) return;
+      selectTrain(t._id);
+    });
+    setTimeout(()=>{
+      div.querySelectorAll('button').forEach(b=>{
+        const id = b.getAttribute('data-id');
+        const action = b.getAttribute('data-action');
+        if(action === 'copy') b.addEventListener('click', e=>{ navigator.clipboard.writeText(t.train_number); alert('Copied ' + t.train_number); e.stopPropagation(); });
+        else b.addEventListener('click', e=>{ selectTrain(id); e.stopPropagation(); });
+      });
+    },0);
+    list.appendChild(div);
+  });
+}
+
+/* ---------------------
+  Select & populate form
+----------------------*/
+function selectTrain(id){
+  const t = trains.find(x=>x._id === id);
+  if(!t) return;
+  selectedId = id;
+  renderTrainList();
+  populateTrainForm(t);
+}
+
+function populateTrainForm(t){
+  $('#selectedTitle').textContent = (t.train_id ? `#${t.train_id} ` : '') + (t.train_number || '(unnamed)');
+  $('#train_db_id').value = t.train_id !== null && t.train_id !== undefined ? t.train_id : '';
+  $('#train_number').value = t.train_number || '';
+  $('#train_status').value = t.status || 'Available';
+  $('#train_depot_id').value = t.depot_id !== null && t.depot_id !== undefined ? t.depot_id : '';
+  $('#train_in_service').value = t.in_service ? 'true' : 'false';
+  $('#train_last_updated').value = t.last_updated || '';
+
+  // child lists
+  renderFcTable(t);
+  renderJcTable(t);
+  renderBcTable(t);
+  renderMlTable(t);
+  renderCsTable(t);
+  renderSpTable(t);
+}
+
+/* ---------------------
+  Write form to train object
+----------------------*/
+function writeTrainFromForm(t){
+  const dbid = $('#train_db_id').value;
+  t.train_id = (dbid === '' || dbid === null) ? null : Number(dbid);
+  t.train_number = $('#train_number').value.trim();
+  t.status = $('#train_status').value;
+  t.depot_id = $('#train_depot_id').value === '' ? null : Number($('#train_depot_id').value);
+  t.in_service = $('#train_in_service').value === 'true';
+  t.last_updated = $('#train_last_updated').value || null;
+  // child lists handled separately
+}
+
+/* -------------------------------
+   Certificates UI handlers
+---------------------------------*/
+$('#addFcBtn').addEventListener('click', ()=>{
+  if(!selectedId){ alert('Select a train first'); return; }
+  const cert_id_raw = $('#fc_cert_id').value;
+  const cert_id = cert_id_raw === '' ? null : Number(cert_id_raw);
+  const dept = $('#fc_department').value.trim();
+  const status = $('#fc_status').value;
+  const from = $('#fc_valid_from').value || null;
+  const to = $('#fc_valid_to').value || null;
+  const last_checked = $('#fc_last_checked').value || new Date().toISOString();
+  if(!dept){ alert('Enter department'); return; }
+  const t = trains.find(x=>x._id===selectedId);
+  t.fitness_certificates.push({ cert_id: cert_id, department: dept, status: status, valid_from: from, valid_to: to, last_checked: last_checked });
+  renderFcTable(t);
+});
+function renderFcTable(t){
+  const tbody = $('#fc_table tbody'); tbody.innerHTML = '';
+  t.fitness_certificates.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.cert_id ?? '—'}</td><td>${r.department}</td><td>${r.status}</td><td>${r.valid_from||'—'}</td><td>${r.valid_to||'—'}</td><td>${r.last_checked || '—'}</td>
+      <td><button class="btn ghost" data-idx="${i}" data-type="fc-remove">Remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-type="fc-remove"]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const i = Number(b.getAttribute('data-idx'));
+      const t = trains.find(x=>x._id===selectedId);
+      t.fitness_certificates.splice(i,1);
+      renderFcTable(t);
+    });
+  });
+}
+
+/* -------------------------------
+   Job cards handlers
+---------------------------------*/
+$('#addJcBtn').addEventListener('click', ()=>{
+  if(!selectedId){ alert('Select a train first'); return; }
+  const severity = $('#jc_severity').value;
+  const desc = $('#jc_description').value.trim();
+  const status = $('#jc_status').value;
+  const est = $('#jc_est_hours').value === '' ? null : Number($('#jc_est_hours').value);
+  const parts_pending = $('#jc_parts_pending').value === 'true';
+  const created_at = $('#jc_created_at').value || new Date().toISOString();
+  const closed_at = $('#jc_closed_at').value || null;
+  const t = trains.find(x=>x._id===selectedId);
+  t.job_cards.push({ job_id: null, severity, description: desc, status, estimated_hours: est, parts_pending, created_at, closed_at });
+  $('#jc_description').value = '';
+  renderJcTable(t);
+});
+function renderJcTable(t){
+  const tbody = $('#jc_table tbody'); tbody.innerHTML = '';
+  t.job_cards.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.severity}</td><td>${r.status}</td><td>${r.estimated_hours ?? '—'}</td><td>${r.parts_pending}</td><td>${r.created_at ?? '—'}</td><td>${r.closed_at ?? '—'}</td>
+      <td><button class="btn ghost" data-idx="${i}" data-type="jc-remove">Remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-type="jc-remove"]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const i = Number(b.getAttribute('data-idx'));
+      const t = trains.find(x=>x._id===selectedId);
+      t.job_cards.splice(i,1);
+      renderJcTable(t);
+    });
+  });
+}
+
+/* -------------------------------
+   Branding contracts handlers
+---------------------------------*/
+$('#addBcBtn').addEventListener('click', ()=>{
+  if(!selectedId){ alert('Select a train first'); return; }
+  const contract_id_raw = $('#bc_contract_id').value;
+  const contract_id = contract_id_raw === '' ? null : Number(contract_id_raw);
+  const advertiser = $('#bc_advertiser').value.trim();
+  const priority = $('#bc_priority').value;
+  const req = $('#bc_required_hours').value === '' ? null : Number($('#bc_required_hours').value);
+  const accum = $('#bc_accum_hours').value === '' ? 0 : Number($('#bc_accum_hours').value);
+  const window_type = $('#bc_window_type').value;
+  const start = $('#bc_start').value || null;
+  const end = $('#bc_end').value || null;
+  const t = trains.find(x=>x._id===selectedId);
+  t.branding_contracts.push({ contract_id: contract_id, advertiser_name: advertiser, priority_level: priority, exposure_required_hours: req, exposure_accumulated_hours: accum, window_type, start_date: start, end_date: end });
+  renderBcTable(t);
+});
+function renderBcTable(t){
+  const tbody = $('#bc_table tbody'); tbody.innerHTML = '';
+  t.branding_contracts.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.contract_id ?? '—'}</td><td>${r.advertiser_name||'—'}</td><td>${r.priority_level}</td><td>${r.exposure_required_hours ?? '—'}</td><td>${r.start_date||'—'} → ${r.end_date||'—'}</td>
+      <td><button class="btn ghost" data-idx="${i}" data-type="bc-remove">Remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-type="bc-remove"]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const i = Number(b.getAttribute('data-idx'));
+      const t = trains.find(x=>x._id===selectedId);
+      t.branding_contracts.splice(i,1);
+      renderBcTable(t);
+    });
+  });
+}
+
+/* -------------------------------
+   Mileage logs handlers
+---------------------------------*/
+$('#addMlBtn').addEventListener('click', ()=>{
+  if(!selectedId){ alert('Select a train first'); return; }
+  const log_id_raw = $('#ml_log_id').value;
+  const log_id = log_id_raw === '' ? null : Number(log_id_raw);
+  const date = $('#ml_date').value;
+  const km = $('#ml_km').value === '' ? null : Number($('#ml_km').value);
+  const cum = $('#ml_cum').value === '' ? null : Number($('#ml_cum').value);
+  if(!date){ alert('Enter log date'); return; }
+  const t = trains.find(x=>x._id===selectedId);
+  t.mileage_logs.push({ log_id: log_id, log_date: date, km_run: km, cumulative_km: cum });
+  renderMlTable(t);
+});
+function renderMlTable(t){
+  const tbody = $('#ml_table tbody'); tbody.innerHTML = '';
+  t.mileage_logs.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.log_id ?? '—'}</td><td>${r.log_date}</td><td>${r.km_run ?? '—'}</td><td>${r.cumulative_km ?? '—'}</td>
+      <td><button class="btn ghost" data-idx="${i}" data-type="ml-remove">Remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-type="ml-remove"]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const i = Number(b.getAttribute('data-idx'));
+      const t = trains.find(x=>x._id===selectedId);
+      t.mileage_logs.splice(i,1);
+      renderMlTable(t);
+    });
+  });
+}
+
+/* -------------------------------
+   Cleaning schedule handlers
+---------------------------------*/
+$('#addCsBtn').addEventListener('click', ()=>{
+  if(!selectedId){ alert('Select a train first'); return; }
+  const cleaning_id_raw = $('#cs_cleaning_id').value;
+  const cleaning_id = cleaning_id_raw === '' ? null : Number(cleaning_id_raw);
+  const type = $('#cs_type').value;
+  const required = $('#cs_required').value === 'true';
+  const dur = $('#cs_duration').value === '' ? null : Number($('#cs_duration').value);
+  const bay = $('#cs_bay_id').value === '' ? null : Number($('#cs_bay_id').value);
+  const crew = $('#cs_crew').value === '' ? null : Number($('#cs_crew').value);
+  const deadline = $('#cs_deadline').value || null;
+  const status = $('#cs_status').value;
+  const t = trains.find(x=>x._id===selectedId);
+  t.cleaning_schedules.push({ cleaning_id: cleaning_id, cleaning_type:type, required, duration_hours:dur, bay_id: bay, crew_assigned: crew, deadline, status });
+  renderCsTable(t);
+});
+function renderCsTable(t){
+  const tbody = $('#cs_table tbody'); tbody.innerHTML = '';
+  t.cleaning_schedules.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.cleaning_id ?? '—'}</td><td>${r.cleaning_type}</td><td>${r.required}</td><td>${r.bay_id ?? '—'}</td><td>${r.deadline ?? '—'}</td>
+      <td><button class="btn ghost" data-idx="${i}" data-type="cs-remove">Remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-type="cs-remove"]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const i = Number(b.getAttribute('data-idx'));
+      const t = trains.find(x=>x._id===selectedId);
+      t.cleaning_schedules.splice(i,1);
+      renderCsTable(t);
+    });
+  });
+}
+
+/* -------------------------------
+   Stabling position handlers
+---------------------------------*/
+$('#addSpBtn').addEventListener('click', ()=>{
+  if(!selectedId){ alert('Select a train first'); return; }
+  const stab_id_raw = $('#sp_stab_id').value;
+  const stab_id = stab_id_raw === '' ? null : Number(stab_id_raw);
+  const bay = $('#sp_bay_id').value === '' ? null : Number($('#sp_bay_id').value);
+  const pos = $('#sp_pos_index').value === '' ? null : Number($('#sp_pos_index').value);
+  const dist = $('#sp_dist').value === '' ? null : Number($('#sp_dist').value);
+  const shunt = $('#sp_shunt').value === '' ? null : Number($('#sp_shunt').value);
+  const blocked = $('#sp_blocked').value === 'true';
+  const conflicts = $('#sp_conflicts').value === 'true';
+  const max_moves = $('#sp_max_moves').value === '' ? null : Number($('#sp_max_moves').value);
+  const t = trains.find(x=>x._id===selectedId);
+  t.stabling_positions.push({ stab_id: stab_id, bay_id: bay, bay_position_index: pos, distance_to_exit_meters: dist, estimated_shunt_moves: shunt, blocked, conflicts_with_other_rakes: conflicts, max_allowed_moves: max_moves });
+  renderSpTable(t);
+});
+function renderSpTable(t){
+  const tbody = $('#sp_table tbody'); tbody.innerHTML = '';
+  t.stabling_positions.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.stab_id ?? '—'}</td><td>${r.bay_id ?? '—'}</td><td>${r.bay_position_index ?? '—'}</td><td>${r.distance_to_exit_meters ?? '—'}</td><td>${r.estimated_shunt_moves ?? '—'}</td>
+      <td><button class="btn ghost" data-idx="${i}" data-type="sp-remove">Remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-type="sp-remove"]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const i = Number(b.getAttribute('data-idx'));
+      const t = trains.find(x=>x._id===selectedId);
+      t.stabling_positions.splice(i,1);
+      renderSpTable(t);
+    });
+  });
+}
+
+/* -------------------------
+   Create / Delete / Save
+--------------------------*/
+$('#createTrainBtn').addEventListener('click', ()=>{
+  const tn = $('#newTrainNumber').value.trim();
+  if(!tn){ alert('Enter a train number'); return; }
+  if(trains.some(x=>x.train_number === tn)){ alert('Train number must be unique'); return; }
+  const t = createEmptyTrain(tn);
+  t.train_number = tn;
+  trains.push(t);
+  $('#newTrainNumber').value = '';
+  renderTrainList();
+  selectTrain(t._id);
+});
+
+$('#deleteTrainBtn').addEventListener('click', ()=>{
+  if(!selectedId){ alert('Select a train'); return; }
+  if(!confirm('Delete this train and all child records locally?')) return;
+  const idx = trains.findIndex(x=>x._id === selectedId);
+  if(idx >= 0) trains.splice(idx,1);
+  selectedId = null;
+  renderTrainList();
+  $('#selectedTitle').textContent = 'No train selected';
+  // clear child tables
+  $('#fc_table tbody').innerHTML = ''; $('#jc_table tbody').innerHTML=''; $('#bc_table tbody').innerHTML=''; $('#ml_table tbody').innerHTML=''; $('#cs_table tbody').innerHTML=''; $('#sp_table tbody').innerHTML='';
+});
+
+/* -------------------------
+   Build payload matching SQL schema
+--------------------------*/
+function buildPayload(train){
+  // include train_id if set
+  return {
+    train: {
+      train_id: (train.train_id !== null && train.train_id !== undefined) ? train.train_id : undefined,
+      train_number: train.train_number,
+      status: train.status,
+      depot_id: train.depot_id,
+      in_service: train.in_service,
+      last_updated: train.last_updated
+    },
+    depots: depots.map(d=>({ depot_id: d.depot_id, name: d.name, location: d.location })),
+    fitness_certificate: train.fitness_certificates.map(r=>({
+      cert_id: r.cert_id, train_id: train.train_id || undefined, department: r.department, status: r.status, valid_from: r.valid_from, valid_to: r.valid_to, last_checked: r.last_checked
+    })),
+    job_card: train.job_cards.map(r=>({
+      job_id: r.job_id, train_id: train.train_id || undefined, severity: r.severity, description: r.description, status: r.status, estimated_hours: r.estimated_hours, parts_pending: r.parts_pending, created_at: r.created_at, closed_at: r.closed_at
+    })),
+    branding_contract: train.branding_contracts.map(r=>({
+      contract_id: r.contract_id, train_id: train.train_id || undefined, advertiser_name: r.advertiser_name, priority_level: r.priority_level, exposure_required_hours: r.exposure_required_hours, exposure_accumulated_hours: r.exposure_accumulated_hours, window_type: r.window_type, start_date: r.start_date, end_date: r.end_date
+    })),
+    mileage_log: train.mileage_logs.map(r=>({
+      log_id: r.log_id, train_id: train.train_id || undefined, log_date: r.log_date, km_run: r.km_run, cumulative_km: r.cumulative_km
+    })),
+    cleaning_schedule: train.cleaning_schedules.map(r=>({
+      cleaning_id: r.cleaning_id, train_id: train.train_id || undefined, cleaning_type: r.cleaning_type, required: r.required, duration_hours: r.duration_hours, bay_id: r.bay_id, crew_assigned: r.crew_assigned, deadline: r.deadline, status: r.status
+    })),
+    stabling_position: train.stabling_positions.map(r=>({
+      stab_id: r.stab_id, train_id: train.train_id || undefined, bay_id: r.bay_id, bay_position_index: r.bay_position_index, distance_to_exit_meters: r.distance_to_exit_meters, estimated_shunt_moves: r.estimated_shunt_moves, blocked: r.blocked, conflicts_with_other_rakes: r.conflicts_with_other_rakes, max_allowed_moves: r.max_allowed_moves
+    }))
+  };
+}
+
+/* Save single train: attempt POST; if fails, queue locally */
+async function saveTrain(train){
+  const payload = buildPayload(train);
+  try{
+    const res = await fetch(BACKEND_SAVE_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if(!res.ok) throw new Error('Server '+res.status);
+    const json = await res.json();
+    // if server returns canonical train_id, store it locally
+    if(json && json.train_id) train.train_id = json.train_id;
+    train.savedAt = new Date().toISOString();
+    alert('Saved train ' + train.train_number + ' to server.');
+    removeFromQueue(train._id);
+    renderTrainList();
+    populateTrainForm(train);
+    return json;
+  }catch(err){
+    queueLocally({ _id: train._id, payload, savedAt: new Date().toISOString() });
+    alert('Save failed, queued locally: ' + err.message);
+    return null;
+  }
+}
+
+/* Save selected train */
+$('#saveTrainBtn').addEventListener('click', async ()=>{
+  if(!selectedId){ alert('Select a train to save'); return; }
+  const t = trains.find(x=>x._id===selectedId);
+  writeTrainFromForm(t);
+  await saveTrain(t);
+});
+
+/* Save all trains */
+$('#saveAllBtn').addEventListener('click', async ()=>{
+  if(trains.length === 0){ alert('No trains to save'); return; }
+  for(const t of trains){
+    writeTrainFromForm(t);
+    await saveTrain(t);
+  }
+  alert('Save-all done (saved or queued).');
+});
+
+/* Local queue helpers */
+function queueLocally(item){
+  const q = JSON.parse(localStorage.getItem('train_queue') || '[]');
+  q.push(item);
+  localStorage.setItem('train_queue', JSON.stringify(q));
+}
+function removeFromQueue(clientId){
+  const q = JSON.parse(localStorage.getItem('train_queue') || '[]');
+  const nq = q.filter(i=>i._id !== clientId);
+  localStorage.setItem('train_queue', JSON.stringify(nq));
+}
+async function syncQueue(){
+  const q = JSON.parse(localStorage.getItem('train_queue') || '[]');
+  if(!q.length){ alert('Queue is empty'); return; }
+  try{
+    // backend should accept { bulk: [payloads] }
+    const res = await fetch(BACKEND_SAVE_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ bulk: q.map(x=>x.payload) }) });
+    if(!res.ok) throw new Error('Server '+res.status);
+    localStorage.removeItem('train_queue');
+    alert('Queue synced to server');
+  }catch(err){
+    alert('Sync failed: ' + err.message);
+  }
+}
+$('#syncQueueBtn').addEventListener('click', ()=> syncQueue());
+window.addEventListener('online', ()=> syncQueue());
+</script>
+</body>
+</html>

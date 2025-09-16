@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Train Induction List</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f6f9fc;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 2rem;
+      color: #0ea5e9;
+    }
+
+    .btn-back {
+      display: inline-block;
+      margin: 15px auto;
+      padding: 10px 18px;
+      background: #0ea5e9;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: background 0.2s ease-in-out;
+    }
+
+    .btn-back:hover {
+      background: #0284c7;
+    }
+
+    .table-container {
+      max-width: 95%;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow-x: auto;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.95rem;
+    }
+
+    thead {
+      background: #0ea5e9;
+      color: white;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: center;
+    }
+
+    tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    tr:hover {
+      background: #e0f2fe;
+      transition: background 0.2s ease-in-out;
+    }
+
+    th:first-child {
+      border-top-left-radius: 8px;
+    }
+
+    th:last-child {
+      border-top-right-radius: 8px;
+    }
+
+    td, th {
+      border-bottom: 1px solid #ddd;
+    }
+
+    td:nth-child(3) {
+      font-weight: bold;
+      color: #1e3a8a;
+    }
+
+    .status-yes {
+      color: #16a34a;
+      font-weight: bold;
+    }
+
+    .status-no {
+      color: #dc2626;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚆 Train Induction List</h1>
+
+  <div style="text-align:center;">
+    <a href="http://127.0.0.1:5000/" class="btn-back">⬅ Back to Home</a>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Train ID</th>
+          <th>List Type</th>
+          <th>Score</th>
+          <th>Fitness Valid</th>
+          <th>Job Card Open</th>
+          <th>Priority Level</th>
+          <th>Cumulative KM</th>
+          <th>Cleaning Required</th>
+          <th>Cleaning Status</th>
+          <th>Estimated Shunt Moves</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in trains %}
+        <tr>
+          <td>{{ t.train_id }}</td>
+          <td>{{ t.list_type }}</td>
+          <td>{{ t.score }}</td>
+          <td class="{{ 'status-yes' if t.fitness_valid else 'status-no' }}">
+            {{ 'Yes' if t.fitness_valid else 'No' }}
+          </td>
+          <td class="{{ 'status-yes' if t.job_card_open else 'status-no' }}">
+            {{ 'Open' if t.job_card_open else 'Closed' }}
+          </td>
+          <td>{{ t.branding_level }}</td>
+          <td>{{ t.cumulative_km }}</td>
+          <td class="{{ 'status-yes' if t.cleaning_required else 'status-no' }}">
+            {{ 'Required' if t.cleaning_required else 'Not Required' }}
+          </td>
+          <td>{{ t.cleaning_status }}</td>
+          <td>{{ t.estimated_shunt_moves }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
