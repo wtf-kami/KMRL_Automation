@@ -63,9 +63,9 @@ def add_depot():
 # --- Database connection ---
 def get_db():
     return psycopg.connect(  # MIGRATION: psycopg.connect
-        host="db.pofumrgccrhearjjlwhv.supabase.co",
+        host="aws-1-ap-southeast-1.pooler.supabase.com",
         dbname="postgres",
-        user="postgres",
+        user="postgres.pofumrgccrhearjjlwhv",
         password="02496",
         port=5432  # MIGRATION: Int, not string
     )
@@ -349,3 +349,4 @@ def save_train():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
