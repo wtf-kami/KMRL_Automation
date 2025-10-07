@@ -58,8 +58,8 @@ def add_depot():
 # --- Database connection ---
 def get_db():
     return psycopg2.connect(
-        host="localhost",
-        dbname="KML_dat",
+        host="db.pofumrgccrhearjjlwhv.supabase.co",
+        dbname="postgres",
         user="postgres",
         password="02496",
         port ="5432"
@@ -335,3 +335,4 @@ if __name__ == "__main__":
 
 
     
+
